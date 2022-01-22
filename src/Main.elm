@@ -11,7 +11,7 @@ main =
 
 
 type alias Memory =
-    { select : Coord
+    { currentPos : Coord
     , selections : List Coord
     }
 
@@ -22,13 +22,13 @@ type alias Coord =
 
 initialMemory : Memory
 initialMemory =
-    { select = { x = 1.0, y = 1.0 }, selections = [] }
+    { currentPos = { x = 1.0, y = 1.0 }, selections = [] }
 
 
 update : Computer -> Memory -> Memory
 update computer mem =
     let
-        mouseXY =
+        { x, y } =
             toGameCoordinates computer computer.mouse
 
         convert z =
@@ -38,14 +38,11 @@ update computer mem =
                 |> clamp -constants.gridAbs constants.gridAbs
 
         pos =
-            { x = convert mouseXY.x, y = convert mouseXY.y }
-
-        click =
-            computer.mouse.click
+            { x = convert x, y = y }
     in
-    { select = pos
+    { currentPos = pos
     , selections =
-        if click then
+        if computer.mouse.click then
             uniqueInsert pos mem.selections
 
         else
@@ -82,7 +79,7 @@ viewGame : Memory -> List Shape
 viewGame mem =
     [ group (coords |> List.map dot)
     , circle white 0.4
-        |> move mem.select.x mem.select.y
+        |> move mem.currentPos.x mem.currentPos.y
         |> fade 0.3
     , group
         (mem.selections
