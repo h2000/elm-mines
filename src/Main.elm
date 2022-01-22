@@ -41,11 +41,6 @@ update computer mem =
     }
 
 
-uniqueInsert : a -> List a -> List a
-uniqueInsert x xs =
-    EverySet.toList (EverySet.insert x (EverySet.fromList xs))
-
-
 view : Computer -> Memory -> List Shape
 view computer mem =
     [ viewGame mem |> scale (gameScale computer)
@@ -103,8 +98,12 @@ gridCoordinates =
 
 constants : { gameWidth : number, gridAbs : number }
 constants =
-    { gameWidth = 12
-    , gridAbs = 5
+    let
+        side =
+            5
+    in
+    { gameWidth = side * 2 + 2
+    , gridAbs = side
     }
 
 
@@ -137,3 +136,8 @@ mousePos computer =
                 |> clamp -constants.gridAbs constants.gridAbs
     in
     { x = convert x, y = convert y }
+
+
+uniqueInsert : a -> List a -> List a
+uniqueInsert x xs =
+    EverySet.toList (EverySet.insert x (EverySet.fromList xs))
