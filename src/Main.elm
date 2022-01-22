@@ -48,7 +48,7 @@ uniqueInsert x xs =
 
 view : Computer -> Memory -> List Shape
 view computer mem =
-    [ group (viewGame mem) |> scale (gameScale computer)
+    [ viewGame mem |> scale (gameScale computer)
     , viewHud computer mem
     ]
 
@@ -61,26 +61,23 @@ viewHud computer mem =
         |> moveY (computer.screen.top - 10)
 
 
-
--- |> move
-
-
-viewGame : Memory -> List Shape
+viewGame : Memory -> Shape
 viewGame mem =
-    [ group (gridCoordinates |> List.map viewCell)
-    , circle white 0.4
-        |> move mem.currentPos.x mem.currentPos.y
-        |> fade 0.3
-    , group
-        (mem.selections
-            |> List.map
-                (\{ x, y } ->
-                    circle yellow 0.4
-                        |> move x y
-                        |> fade 0.3
-                )
-        )
-    ]
+    group
+        [ group (gridCoordinates |> List.map viewCell)
+        , circle white 0.4
+            |> move mem.currentPos.x mem.currentPos.y
+            |> fade 0.3
+        , group
+            (mem.selections
+                |> List.map
+                    (\{ x, y } ->
+                        circle yellow 0.4
+                            |> move x y
+                            |> fade 0.3
+                    )
+            )
+        ]
 
 
 viewCell : ( Int, Int ) -> Shape
