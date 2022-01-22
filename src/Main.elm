@@ -28,17 +28,8 @@ initialMemory =
 update : Computer -> Memory -> Memory
 update computer mem =
     let
-        { x, y } =
-            toGameCoordinates computer computer.mouse
-
-        convert z =
-            z
-                |> round
-                |> toFloat
-                |> clamp -constants.gridAbs constants.gridAbs
-
         pos =
-            { x = convert x, y = y }
+            mousePos computer
     in
     { currentPos = pos
     , selections =
@@ -59,7 +50,6 @@ view : Computer -> Memory -> List Shape
 view computer mem =
     [ group (viewGame mem) |> scale (gameScale computer)
     , viewHud computer mem
-    , circle red 5
     ]
 
 
@@ -77,7 +67,7 @@ viewHud computer mem =
 
 viewGame : Memory -> List Shape
 viewGame mem =
-    [ group (coords |> List.map dot)
+    [ group (gridCoordinates |> List.map viewCell)
     , circle white 0.4
         |> move mem.currentPos.x mem.currentPos.y
         |> fade 0.3
@@ -93,8 +83,8 @@ viewGame mem =
     ]
 
 
-dot : ( Int, Int ) -> Shape
-dot ( x, y ) =
+viewCell : ( Int, Int ) -> Shape
+viewCell ( x, y ) =
     group
         [ rectangle lightBlue 0.95 0.95 |> fade 0.75
         , words white (String.fromInt x ++ "," ++ String.fromInt y)
@@ -103,13 +93,15 @@ dot ( x, y ) =
         |> move (toFloat x) (toFloat y)
 
 
-coords : List ( Int, Int )
-coords =
+gridCoordinates : List ( Int, Int )
+gridCoordinates =
     let
-        row c =
-            List.range -5 5 |> List.map (\r -> ( r, c ))
+        row col =
+            List.range -constants.gridAbs constants.gridAbs
+                |> List.map (\r -> ( r, col ))
     in
-    List.range -5 5 |> List.concatMap row
+    List.range -constants.gridAbs constants.gridAbs
+        |> List.concatMap row
 
 
 constants : { gameWidth : number, gridAbs : number }
@@ -133,3 +125,18 @@ toGameCoordinates computer { x, y } =
     { x = 1 / k * x
     , y = 1 / k * y
     }
+
+
+mousePos : Computer -> Coord
+mousePos computer =
+    let
+        { x, y } =
+            toGameCoordinates computer computer.mouse
+
+        convert z =
+            z
+                |> round
+                |> toFloat
+                |> clamp -constants.gridAbs constants.gridAbs
+    in
+    { x = convert x, y = convert y }
