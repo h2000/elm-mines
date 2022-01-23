@@ -1,4 +1,4 @@
-module Playground exposing
+module Lib.Playground exposing
     ( picture, animation, game
     , Shape, circle, oval, square, rectangle, triangle, pentagon, hexagon, octagon, polygon
     , words
@@ -13,12 +13,7 @@ module Playground exposing
     , darkRed, darkOrange, darkYellow, darkGreen, darkBlue, darkPurple, darkBrown
     , white, lightGrey, grey, darkGrey, lightCharcoal, charcoal, darkCharcoal, black
     , lightGray, gray, darkGray
-    , Number
-    --
-    --
-    --
-    --
-    --
+    , AnimationProgram, GameProgram, PictureProgram
     )
 
 {-|
@@ -93,11 +88,6 @@ module Playground exposing
 
 @docs lightGray, gray, darkGray
 
-
-### Numbers
-
-@docs Number
-
 -}
 
 import Browser
@@ -115,6 +105,18 @@ import Time
 
 
 -- PICTURE
+
+
+type alias PictureProgram =
+    Platform.Program () Screen ( Basics.Int, Basics.Int )
+
+
+type alias AnimationProgram =
+    Platform.Program () Animation Msg
+
+
+type alias GameProgram memory =
+    Platform.Program () (Game memory) Msg
 
 
 {-| Make a picture! Here is a picture of a triangle with an eyeball:
@@ -207,17 +209,11 @@ while the mouse button is down.
 
 -}
 type alias Mouse =
-    { x : Number
-    , y : Number
+    { x : Float
+    , y : Float
     , down : Bool
     , click : Bool
     }
-
-
-{-| A number like `1` or `3.14` or `-120`.
--}
-type alias Number =
-    Float
 
 
 
@@ -298,7 +294,7 @@ So to make a square move left and right based on the arrow keys, we could say:
         x + toX computer.keyboard
 
 -}
-toX : Keyboard -> Number
+toX : Keyboard -> Float
 toX keyboard =
     (if keyboard.right then
         1
@@ -339,7 +335,7 @@ This can be used to move characters around in games just like [`toX`](#toX):
         )
 
 -}
-toY : Keyboard -> Number
+toY : Keyboard -> Float
 toY keyboard =
     (if keyboard.up then
         1
@@ -386,7 +382,7 @@ Now when you go up/right, you are still going 1 pixel per update.
         ( x + dx, y + dy )
 
 -}
-toXY : Keyboard -> ( Number, Number )
+toXY : Keyboard -> ( Float, Float )
 toXY keyboard =
     let
         x =
@@ -402,7 +398,7 @@ toXY keyboard =
         ( x, y )
 
 
-squareRootOfTwo : Number
+squareRootOfTwo : Float
 squareRootOfTwo =
     sqrt 2
 
@@ -427,12 +423,12 @@ on the bottom of the screen, no matter the dimensions.
 
 -}
 type alias Screen =
-    { width : Number
-    , height : Number
-    , top : Number
-    , left : Number
-    , right : Number
-    , bottom : Number
+    { width : Float
+    , height : Float
+    , top : Float
+    , left : Float
+    , right : Float
+    , bottom : Float
     }
 
 
@@ -468,7 +464,7 @@ It will do a full rotation once every eight seconds. Try changing the `8` to
 a `2` to make it do a full rotation every two seconds. It moves a lot faster!
 
 -}
-spin : Number -> Time -> Number
+spin : Float -> Time -> Float
 spin period time =
     360 * toFrac period time
 
@@ -490,7 +486,7 @@ The radius of the circle will cycles between 50 and 90 every seven seconds.
 It kind of looks like it is breathing.
 
 -}
-wave : Number -> Number -> Number -> Time -> Number
+wave : Float -> Float -> Float -> Time -> Float
 wave lo hi period time =
     lo + (hi - lo) * (1 + cos (turns (toFrac period time))) / 2
 
@@ -513,7 +509,7 @@ It gets rotated by an angle. The angle cycles from -20 degrees to 20 degrees
 every four seconds.
 
 -}
-zigzag : Number -> Number -> Number -> Time -> Number
+zigzag : Float -> Float -> Float -> Time -> Float
 zigzag lo hi period time =
     lo + (hi - lo) * abs (2 * toFrac period time - 1)
 
@@ -918,26 +914,26 @@ Read on to see examples of [`circle`](#circle), [`rectangle`](#rectangle),
 -}
 type Shape
     = Shape
-        Number
+        Float
         -- x
-        Number
+        Float
         -- y
-        Number
+        Float
         -- angle
-        Number
+        Float
         -- scale
-        Number
+        Float
         -- alpha
         Form
 
 
 type Form
-    = Circle Color Number
-    | Oval Color Number Number
-    | Rectangle Color Number Number
-    | Ngon Color Int Number
-    | Polygon Color (List ( Number, Number ))
-    | Image Number Number String
+    = Circle Color Float
+    | Oval Color Float Float
+    | Rectangle Color Float Float
+    | Ngon Color Int Float
+    | Polygon Color (List ( Float, Float ))
+    | Image Float Float String
     | Words Color String
     | Group (List Shape)
 
@@ -954,7 +950,7 @@ You give a color and then the radius. So the higher the number, the larger
 the circle.
 
 -}
-circle : Color -> Number -> Shape
+circle : Color -> Float -> Shape
 circle color radius =
     Shape 0 0 0 1 1 (Circle color radius)
 
@@ -968,7 +964,7 @@ You give the color, and then the width and height. So our `football` example
 is 200 pixels wide and 100 pixels tall.
 
 -}
-oval : Color -> Number -> Number -> Shape
+oval : Color -> Float -> Float -> Shape
 oval color width height =
     Shape 0 0 0 1 1 (Oval color width height)
 
@@ -987,7 +983,7 @@ The number you give is the dimension of each side. So that purple square would
 be 80 pixels by 80 pixels.
 
 -}
-square : Color -> Number -> Shape
+square : Color -> Float -> Shape
 square color n =
     Shape 0 0 0 1 1 (Rectangle color n n)
 
@@ -1006,7 +1002,7 @@ You give the color, width, and then height. So the first shape is vertical
 part of the cross, the thinner and taller part.
 
 -}
-rectangle : Color -> Number -> Number -> Shape
+rectangle : Color -> Float -> Float -> Shape
 rectangle color width height =
     Shape 0 0 0 1 1 (Rectangle color width height)
 
@@ -1025,7 +1021,7 @@ The number is the "radius", so the distance from the center to each point of
 the pyramid is `200`. Pretty big!
 
 -}
-triangle : Color -> Number -> Shape
+triangle : Color -> Float -> Shape
 triangle color radius =
     Shape 0 0 0 1 1 (Ngon color 3 radius)
 
@@ -1043,7 +1039,7 @@ You give the color and then the radius. So the distance from the center to each
 of the five points is 100 pixels.
 
 -}
-pentagon : Color -> Number -> Shape
+pentagon : Color -> Float -> Shape
 pentagon color radius =
     Shape 0 0 0 1 1 (Ngon color 5 radius)
 
@@ -1063,7 +1059,7 @@ If you made more hexagons, you could [`move`](#move) them around to make a
 honeycomb pattern!
 
 -}
-hexagon : Color -> Number -> Shape
+hexagon : Color -> Float -> Shape
 hexagon color radius =
     Shape 0 0 0 1 1 (Ngon color 6 radius)
 
@@ -1081,7 +1077,7 @@ You give the color and radius, so each point of this stop sign is 100 pixels
 from the center.
 
 -}
-octagon : Color -> Number -> Shape
+octagon : Color -> Float -> Shape
 octagon color radius =
     Shape 0 0 0 1 1 (Ngon color 8 radius)
 
@@ -1100,7 +1096,7 @@ octagon color radius =
 [`move`](#move) or [`group`](#group) so that rotation makes more sense.
 
 -}
-polygon : Color -> List ( Number, Number ) -> Shape
+polygon : Color -> List ( Float, Float ) -> Shape
 polygon color points =
     Shape 0 0 0 1 1 (Polygon color points)
 
@@ -1117,7 +1113,7 @@ polygon color points =
 You provide the width, height, and then the URL of the image you want to show.
 
 -}
-image : Number -> Number -> String -> Shape
+image : Float -> Float -> String -> Shape
 image w h src =
     Shape 0 0 0 1 1 (Image w h src)
 
@@ -1194,7 +1190,7 @@ group shapes =
             ]
 
 -}
-move : Number -> Number -> Shape -> Shape
+move : Float -> Float -> Shape -> Shape
 move dx dy (Shape x y a s o f) =
     Shape (x + dx) (y + dy) a s o f
 
@@ -1212,7 +1208,7 @@ you could move the leaves up above the trunk:
             ]
 
 -}
-moveUp : Number -> Shape -> Shape
+moveUp : Float -> Shape -> Shape
 moveUp =
     moveY
 
@@ -1231,7 +1227,7 @@ above the ground, you could move the sky up and the ground down:
             ]
 
 -}
-moveDown : Number -> Shape -> Shape
+moveDown : Float -> Shape -> Shape
 moveDown dy (Shape x y a s o f) =
     Shape x (y - dy) a s o f
 
@@ -1248,7 +1244,7 @@ moveDown dy (Shape x y a s o f) =
             ]
 
 -}
-moveLeft : Number -> Shape -> Shape
+moveLeft : Float -> Shape -> Shape
 moveLeft dx (Shape x y a s o f) =
     Shape (x - dx) y a s o f
 
@@ -1265,7 +1261,7 @@ moveLeft dx (Shape x y a s o f) =
             ]
 
 -}
-moveRight : Number -> Shape -> Shape
+moveRight : Float -> Shape -> Shape
 moveRight =
     moveX
 
@@ -1286,7 +1282,7 @@ moves back and forth:
 Using `moveX` feels a bit nicer here because the movement may be positive or negative.
 
 -}
-moveX : Number -> Shape -> Shape
+moveX : Float -> Shape -> Shape
 moveX dx (Shape x y a s o f) =
     Shape (x + dx) y a s o f
 
@@ -1311,7 +1307,7 @@ Using `moveY` feels a bit nicer when setting things relative to the bottom or
 top of the screen, since the values are negative sometimes.
 
 -}
-moveY : Number -> Shape -> Shape
+moveY : Float -> Shape -> Shape
 moveY dy (Shape x y a s o f) =
     Shape x (y + dy) a s o f
 
@@ -1328,7 +1324,7 @@ be larger, you could say:
             ]
 
 -}
-scale : Number -> Shape -> Shape
+scale : Float -> Shape -> Shape
 scale ns (Shape x y a s o f) =
     Shape x y a (s * ns) o f
 
@@ -1347,7 +1343,7 @@ The degrees go **counter-clockwise** to match the direction of the
 [unit circle](https://en.wikipedia.org/wiki/Unit_circle).
 
 -}
-rotate : Number -> Shape -> Shape
+rotate : Float -> Shape -> Shape
 rotate da (Shape x y a s o f) =
     Shape x y (a + da) s o f
 
@@ -1370,7 +1366,7 @@ The number has to be between `0` and `1`, where `0` is totally transparent
 and `1` is completely solid.
 
 -}
-fade : Number -> Shape -> Shape
+fade : Float -> Shape -> Shape
 fade o (Shape x y a s _ f) =
     Shape x y a s o f
 
@@ -1615,12 +1611,12 @@ colors, click on the color previews to get their RGB values.
 [paletton]: http://paletton.com/
 
 -}
-rgb : Number -> Number -> Number -> Color
+rgb : Float -> Float -> Float -> Color
 rgb r g b =
     Rgb (colorClamp r) (colorClamp g) (colorClamp b)
 
 
-colorClamp : Number -> Int
+colorClamp : Float -> Int
 colorClamp number =
     clamp 0 255 (round number)
 
@@ -1693,7 +1689,7 @@ renderShape (Shape x y angle s alpha form) =
 -- RENDER CIRCLE AND OVAL
 
 
-renderCircle : Color -> Number -> Number -> Number -> Number -> Number -> Number -> Svg msg
+renderCircle : Color -> Float -> Float -> Float -> Float -> Float -> Float -> Svg msg
 renderCircle color radius x y angle s alpha =
     Svg.circle
         (r (String.fromFloat radius)
@@ -1704,7 +1700,7 @@ renderCircle color radius x y angle s alpha =
         []
 
 
-renderOval : Color -> Number -> Number -> Number -> Number -> Number -> Number -> Number -> Svg msg
+renderOval : Color -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Svg msg
 renderOval color width height x y angle s alpha =
     ellipse
         (rx (String.fromFloat (width / 2))
@@ -1720,7 +1716,7 @@ renderOval color width height x y angle s alpha =
 -- RENDER RECTANGLE AND IMAGE
 
 
-renderRectangle : Color -> Number -> Number -> Number -> Number -> Number -> Number -> Number -> Svg msg
+renderRectangle : Color -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Svg msg
 renderRectangle color w h x y angle s alpha =
     rect
         (width (String.fromFloat w)
@@ -1732,7 +1728,7 @@ renderRectangle color w h x y angle s alpha =
         []
 
 
-renderRectTransform : Number -> Number -> Number -> Number -> Number -> Number -> String
+renderRectTransform : Float -> Float -> Float -> Float -> Float -> Float -> String
 renderRectTransform width height x y angle s =
     renderTransform x y angle s
         ++ " translate("
@@ -1742,7 +1738,7 @@ renderRectTransform width height x y angle s =
         ++ ")"
 
 
-renderImage : Number -> Number -> String -> Number -> Number -> Number -> Number -> Number -> Svg msg
+renderImage : Float -> Float -> String -> Float -> Float -> Float -> Float -> Float -> Svg msg
 renderImage w h src x y angle s alpha =
     Svg.image
         (xlinkHref src
@@ -1758,7 +1754,7 @@ renderImage w h src x y angle s alpha =
 -- RENDER NGON
 
 
-renderNgon : Color -> Int -> Number -> Number -> Number -> Number -> Number -> Number -> Svg msg
+renderNgon : Color -> Int -> Float -> Float -> Float -> Float -> Float -> Float -> Svg msg
 renderNgon color n radius x y angle s alpha =
     Svg.polygon
         (points (toNgonPoints 0 n radius "")
@@ -1792,7 +1788,7 @@ toNgonPoints i n radius string =
 -- RENDER POLYGON
 
 
-renderPolygon : Color -> List ( Number, Number ) -> Number -> Number -> Number -> Number -> Number -> Svg msg
+renderPolygon : Color -> List ( Float, Float ) -> Float -> Float -> Float -> Float -> Float -> Svg msg
 renderPolygon color coordinates x y angle s alpha =
     Svg.polygon
         (points (List.foldl addPoint "" coordinates)
@@ -1812,7 +1808,7 @@ addPoint ( x, y ) str =
 -- RENDER WORDS
 
 
-renderWords : Color -> String -> Number -> Number -> Number -> Number -> Number -> Svg msg
+renderWords : Color -> String -> Float -> Float -> Float -> Float -> Float -> Svg msg
 renderWords color string x y angle s alpha =
     text_
         (textAnchor "middle"
@@ -1843,7 +1839,7 @@ renderColor color =
 -- RENDER ALPHA
 
 
-renderAlpha : Number -> List (Svg.Attribute msg)
+renderAlpha : Float -> List (Svg.Attribute msg)
 renderAlpha alpha =
     if alpha == 1 then
         []
@@ -1856,7 +1852,7 @@ renderAlpha alpha =
 -- RENDER TRANFORMS
 
 
-renderTransform : Number -> Number -> Number -> Number -> String
+renderTransform : Float -> Float -> Float -> Float -> String
 renderTransform x y a s =
     if a == 0 then
         if s == 1 then

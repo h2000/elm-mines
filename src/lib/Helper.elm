@@ -1,7 +1,7 @@
-module Helper exposing (..)
+module Lib.Helper exposing (..)
 
 import EverySet
-import Playground exposing (Computer, Mouse)
+import Lib.Playground exposing (Computer, Mouse)
 
 
 type alias Coord =

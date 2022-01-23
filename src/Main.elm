@@ -1,15 +1,12 @@
 module Main exposing (main)
 
-import Helper exposing (..)
+import Lib.Helper exposing (..)
+import Lib.Playground exposing (..)
 import List
-import Playground exposing (..)
 import String exposing (fromFloat)
 
 
-
--- main : Program () (Playground.Game Memory) Playground.Msg
-
-
+main : GameProgram Memory
 main =
     game view update initialMemory
 
