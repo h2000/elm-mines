@@ -6,6 +6,10 @@ import Playground exposing (..)
 import String exposing (fromFloat)
 
 
+
+-- main : Program () (Playground.Game Memory) Playground.Msg
+
+
 main =
     game view update initialMemory
 
