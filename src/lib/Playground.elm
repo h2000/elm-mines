@@ -13,7 +13,7 @@ module Lib.Playground exposing
     , darkRed, darkOrange, darkYellow, darkGreen, darkBlue, darkPurple, darkBrown
     , white, lightGrey, grey, darkGrey, lightCharcoal, charcoal, darkCharcoal, black
     , lightGray, gray, darkGray
-    , AnimationProgram, GameProgram, PictureProgram
+    , AnimationProgram, GameProgram, PictureProgram, toMillis
     )
 
 {-|
@@ -524,6 +524,11 @@ toFrac period (Time posix) =
             period * 1000
     in
     toFloat (modBy (round p) ms) / p
+
+
+toMillis : Time -> Int
+toMillis (Time posix) =
+    Time.posixToMillis posix
 
 
 

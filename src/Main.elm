@@ -12,12 +12,18 @@ main =
 
 
 type alias Memory =
-    { currentPos : Coord, selections : List Coord }
+    { currentPos : Coord
+    , selections : List Coord
+    , randomNrs : List Int
+    }
 
 
 initialMemory : Memory
 initialMemory =
-    { currentPos = { x = 0.0, y = 0.0 }, selections = [] }
+    { currentPos = { x = 0.0, y = 0.0 }
+    , selections = []
+    , randomNrs = []
+    }
 
 
 update : Computer -> Memory -> Memory
@@ -29,12 +35,19 @@ update computer mem =
     { currentPos = pos
     , selections =
         if computer.mouse.click then
-            insertAndRemoveDuplicates
-                pos
-                mem.selections
+            Debug.log "XXX" <|
+                insertAndRemoveDuplicates
+                    pos
+                    mem.selections
 
         else
             mem.selections
+    , randomNrs =
+        if List.isEmpty mem.randomNrs && (toMillis computer.time > 0) then
+            randomNrs 10 1 10 (initSeed computer)
+
+        else
+            mem.randomNrs
     }
 
 
@@ -55,11 +68,15 @@ viewHud computer mem =
             mem.selections
                 |> List.map (\{ x, y } -> fromFloat x ++ "," ++ fromFloat y)
                 |> String.join " "
+
+        nrs =
+            "Random: "
+                ++ String.join " " (mem.randomNrs |> List.map String.fromInt)
     in
     group
-        [ words black (pos ++ "/" ++ ps)
+        [ words black (pos ++ "/" ++ ps) |> moveY (computer.screen.top - 10)
+        , words black nrs |> moveY (computer.screen.top - 30)
         ]
-        |> moveY (computer.screen.top - 10)
 
 
 viewGame : Memory -> Shape
