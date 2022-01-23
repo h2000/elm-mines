@@ -1,9 +1,9 @@
 module Main exposing (main)
 
-import EverySet exposing (EverySet)
-import Html exposing (a)
+import Helper exposing (..)
 import List
 import Playground exposing (..)
+import String exposing (fromFloat)
 
 
 main =
@@ -11,18 +11,12 @@ main =
 
 
 type alias Memory =
-    { currentPos : Coord
-    , selections : List Coord
-    }
-
-
-type alias Coord =
-    { x : Float, y : Float }
+    { currentPos : Coord, selections : List Coord }
 
 
 initialMemory : Memory
 initialMemory =
-    { currentPos = { x = 1.0, y = 1.0 }, selections = [] }
+    { currentPos = { x = 0.0, y = 0.0 }, selections = [] }
 
 
 update : Computer -> Memory -> Memory
@@ -34,7 +28,9 @@ update computer mem =
     { currentPos = pos
     , selections =
         if computer.mouse.click then
-            uniqueInsert pos mem.selections
+            insertAndRemoveDuplicates
+                pos
+                mem.selections
 
         else
             mem.selections
@@ -50,8 +46,17 @@ view computer mem =
 
 viewHud : Computer -> Memory -> Shape
 viewHud computer mem =
+    let
+        pos =
+            mem.currentPos |> (\{ x, y } -> fromFloat x ++ "," ++ fromFloat y)
+
+        ps =
+            mem.selections
+                |> List.map (\{ x, y } -> fromFloat x ++ "," ++ fromFloat y)
+                |> String.join " "
+    in
     group
-        [ words black (Debug.toString mem)
+        [ words black (pos ++ "/" ++ ps)
         ]
         |> moveY (computer.screen.top - 10)
 
@@ -67,7 +72,7 @@ viewGame mem =
             (mem.selections
                 |> List.map
                     (\{ x, y } ->
-                        circle yellow 0.4
+                        rectangle white 0.95 0.95
                             |> move x y
                             |> fade 0.3
                     )
@@ -78,66 +83,8 @@ viewGame mem =
 viewCell : ( Int, Int ) -> Shape
 viewCell ( x, y ) =
     group
-        [ rectangle lightBlue 0.95 0.95 |> fade 0.75
+        [ rectangle lightBlue 0.95 0.95
         , words white (String.fromInt x ++ "," ++ String.fromInt y)
             |> scale 0.019
         ]
         |> move (toFloat x) (toFloat y)
-
-
-gridCoordinates : List ( Int, Int )
-gridCoordinates =
-    let
-        row col =
-            List.range -constants.gridAbs constants.gridAbs
-                |> List.map (\r -> ( r, col ))
-    in
-    List.range -constants.gridAbs constants.gridAbs
-        |> List.concatMap row
-
-
-constants : { gameWidth : number, gridAbs : number }
-constants =
-    let
-        side =
-            5
-    in
-    { gameWidth = side * 2 + 2
-    , gridAbs = side
-    }
-
-
-gameScale : { a | screen : { b | width : Float } } -> Float
-gameScale computer =
-    computer.screen.width / (constants.gameWidth + 1.6)
-
-
-toGameCoordinates : Computer -> Mouse -> { x : Float, y : Float }
-toGameCoordinates computer { x, y } =
-    let
-        k =
-            gameScale computer
-    in
-    { x = 1 / k * x
-    , y = 1 / k * y
-    }
-
-
-mousePos : Computer -> Coord
-mousePos computer =
-    let
-        { x, y } =
-            toGameCoordinates computer computer.mouse
-
-        convert z =
-            z
-                |> round
-                |> toFloat
-                |> clamp -constants.gridAbs constants.gridAbs
-    in
-    { x = convert x, y = convert y }
-
-
-uniqueInsert : a -> List a -> List a
-uniqueInsert x xs =
-    EverySet.toList (EverySet.insert x (EverySet.fromList xs))
