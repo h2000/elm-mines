@@ -40,6 +40,9 @@ update computer mem =
                     pos
                     mem.selections
 
+        else if computer.mouse.rightClick then
+            List.filter (\p -> p /= pos) mem.selections
+
         else
             mem.selections
     , randomNrs =
@@ -76,6 +79,15 @@ viewHud computer mem =
     group
         [ words black (pos ++ "/" ++ ps) |> moveY (computer.screen.top - 10)
         , words black nrs |> moveY (computer.screen.top - 30)
+        , words
+            (if computer.mouse.rightClick then
+                red
+
+             else
+                white
+            )
+            "right"
+            |> moveY (computer.screen.top - 60)
         ]
 
 

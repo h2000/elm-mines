@@ -95,6 +95,7 @@ import Browser.Dom as Dom
 import Browser.Events as E
 import Html
 import Html.Attributes as H
+import Html.Events as HE
 import Json.Decode as D
 import Set
 import Svg exposing (..)
@@ -213,6 +214,7 @@ type alias Mouse =
     , y : Float
     , down : Bool
     , click : Bool
+    , rightClick : Bool
     }
 
 
@@ -627,7 +629,13 @@ animationUpdate msg ((Animation v s t) as state) =
         MouseClick ->
             state
 
+        MouseRightClick ->
+            state
+
         MouseButton _ ->
+            state
+
+        NoOp ->
             state
 
 
@@ -700,7 +708,7 @@ game viewMemory updateMemory initialMemory =
 
         view (Game _ memory computer) =
             { title = "Playground"
-            , body = [ render computer.screen (viewMemory computer memory) ]
+            , body = [ Html.div [ onRightClick MouseRightClick ] [ render computer.screen (viewMemory computer memory) ] ]
             }
 
         update msg model =
@@ -726,7 +734,7 @@ game viewMemory updateMemory initialMemory =
 
 initialComputer : Computer
 initialComputer =
-    { mouse = Mouse 0 0 False False
+    { mouse = Mouse 0 0 False False False
     , keyboard = emptyKeyboard
     , screen = toScreen 600 600
     , time = Time (Time.millisToPosix 0)
@@ -753,6 +761,37 @@ gameSubscriptions =
 
 
 
+-- CLICKS
+
+
+type alias MsgWithOptions =
+    { message : Msg
+    , preventDefault : Bool
+    , stopPropagation : Bool
+    }
+
+
+onRightClick : Msg -> Html.Attribute Msg
+onRightClick message =
+    HE.custom "contextmenu" (msgWithOptionsDecoder message)
+
+
+msgWithOptionsDecoder : Msg -> D.Decoder MsgWithOptions
+msgWithOptionsDecoder message =
+    D.map (toMsgWithOptions message) (D.field "button" D.int)
+
+
+toMsgWithOptions : Msg -> Int -> MsgWithOptions
+toMsgWithOptions message id =
+    case id of
+        2 ->
+            { message = message, preventDefault = True, stopPropagation = True }
+
+        _ ->
+            { message = NoOp, preventDefault = False, stopPropagation = False }
+
+
+
 -- GAME HELPERS
 
 
@@ -768,7 +807,9 @@ type Msg
     | VisibilityChanged E.Visibility
     | MouseMove Float Float
     | MouseClick
+    | MouseRightClick
     | MouseButton Bool
+    | NoOp
 
 
 gameUpdate : (Computer -> memory -> memory) -> Msg -> Game memory -> Game memory
@@ -778,7 +819,8 @@ gameUpdate updateMemory msg (Game vis memory computer) =
             Game vis (updateMemory computer memory) <|
                 if computer.mouse.click then
                     { computer | time = Time time, mouse = mouseClick False computer.mouse }
-
+                else if computer.mouse.rightClick then
+                    { computer | time = Time time, mouse = mouseRightClick False computer.mouse }
                 else
                     { computer | time = Time time }
 
@@ -804,6 +846,10 @@ gameUpdate updateMemory msg (Game vis memory computer) =
         MouseClick ->
             Game vis memory { computer | mouse = mouseClick True computer.mouse }
 
+        MouseRightClick ->
+            Debug.log "XXX rightClick" <|
+                Game vis memory { computer | mouse = mouseRightClick True computer.mouse }
+
         MouseButton isDown ->
             Game vis memory { computer | mouse = mouseDown isDown computer.mouse }
 
@@ -812,8 +858,11 @@ gameUpdate updateMemory msg (Game vis memory computer) =
                 memory
                 { computer
                     | keyboard = emptyKeyboard
-                    , mouse = Mouse computer.mouse.x computer.mouse.y False False
+                    , mouse = Mouse computer.mouse.x computer.mouse.y False False False
                 }
+
+        NoOp ->
+            Game vis memory computer
 
 
 
@@ -838,6 +887,11 @@ toScreen width height =
 mouseClick : Bool -> Mouse -> Mouse
 mouseClick bool mouse =
     { mouse | click = bool }
+
+
+mouseRightClick : Bool -> Mouse -> Mouse
+mouseRightClick bool mouse =
+    { mouse | rightClick = bool }
 
 
 mouseDown : Bool -> Mouse -> Mouse

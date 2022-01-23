@@ -17,5 +17,7 @@
     "vite": "^2.7.10",
     "vite-plugin-elm": "^2.5.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "elm-review": "^2.7.0"
+  }
 }
